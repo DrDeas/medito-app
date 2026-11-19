@@ -5,7 +5,6 @@ Unreleased
 - Find Favorites and Downloads in Settings.
 - Skip the donation step in onboarding straight away.
 - [ios] Lock Screen and headphone skip buttons now work.
-- [ios] Timer bells no longer depend on the Ring/Silent switch.
 - Pause still works when the connection drops mid-session.
 - Sessions you delete or edit offline stay that way.
 - Reminders keep to your chosen time when you travel.
