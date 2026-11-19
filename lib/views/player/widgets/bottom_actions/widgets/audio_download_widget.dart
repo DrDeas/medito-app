@@ -208,7 +208,12 @@ class AudioDownloadWidget extends ConsumerWidget {
           .read(audioDownloaderProvider.notifier)
           .downloadTrackAudio(request);
     } catch (e) {
-      showSnackBar(context, e.toString(), backgroundColor: Colors.red);
+      // A person cannot act on a raw exception string.
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.errorUnknownMessage,
+        backgroundColor: ColorConstants.lightError,
+      );
     }
   }
 
@@ -252,7 +257,12 @@ class AudioDownloadWidget extends ConsumerWidget {
               fileId: request.fileId,
             );
       } catch (e) {
-        showSnackBar(context, e.toString(), backgroundColor: Colors.red);
+        // A person cannot act on a raw exception string.
+        showSnackBar(
+          context,
+          AppLocalizations.of(context)!.errorUnknownMessage,
+          backgroundColor: ColorConstants.lightError,
+        );
       }
     }
   }

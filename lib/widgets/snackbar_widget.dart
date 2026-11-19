@@ -21,8 +21,14 @@ void showSnackBar(
   String text, {
   VoidCallback? onActionPressed,
   String? actionLabel,
-  Color backgroundColor = ColorConstants.white,
+  Color? backgroundColor,
 }) {
+  // The inverse of the page: white on the dark theme, near-black on the light
+  // one, where a white bar on a white page had only its shadow to mark it.
+  backgroundColor ??=
+      context != null && Theme.of(context).brightness == Brightness.light
+      ? ColorConstants.lightPrimary
+      : ColorConstants.white;
   final foregroundColor = backgroundColor.computeLuminance() > 0.5
       ? ColorConstants.greyIsTheNewBlack
       : ColorConstants.white;

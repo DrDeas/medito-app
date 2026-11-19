@@ -1,9 +1,15 @@
 import 'dart:io';
+
 import 'package:medito/exceptions/app_error.dart';
 
 class DownloadService {
   static final DownloadService _instance = DownloadService._internal();
-  final _client = HttpClient();
+  // Without these a stalled connection never completes and never fails: the
+  // download sat at "downloading" until the app was killed.
+  static const _connectTimeout = Duration(seconds: 30);
+  static const _stallTimeout = Duration(seconds: 60);
+
+  final _client = HttpClient()..connectionTimeout = _connectTimeout;
 
   factory DownloadService() {
     return _instance;
@@ -19,7 +25,7 @@ class DownloadService {
     final request = await _client.getUrl(Uri.parse(url));
     request.headers.add(HttpHeaders.acceptEncodingHeader, '*');
 
-    final response = await request.close();
+    final response = await request.close().timeout(_stallTimeout);
     final contentLength = response.contentLength;
     var receivedBytes = 0;
 
@@ -40,7 +46,9 @@ class DownloadService {
     }
 
     try {
-      await for (final chunk in response) {
+      // Times out when no bytes arrive for [_stallTimeout], however long the
+      // whole file takes.
+      await for (final chunk in response.timeout(_stallTimeout)) {
         sink.add(chunk);
         receivedBytes += chunk.length;
         onProgress?.call(receivedBytes, contentLength);

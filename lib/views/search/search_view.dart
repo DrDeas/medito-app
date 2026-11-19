@@ -1,4 +1,5 @@
 import 'package:medito/widgets/adaptive/adaptive_page_body.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -72,8 +73,7 @@ class SearchViewState extends ConsumerState<SearchView> {
     _debounce?.cancel();
     _debounce = Timer(_searchDebounce, () {
       if (!mounted) return;
-      // The search backend is ASCII-only.
-      final asciiQuery = value.replaceAll(RegExp(r'[^\x00-\x7F]'), '');
+      final asciiQuery = asciiSearchQuery(value);
       setState(() => _query = asciiQuery);
       _queryLogger.onQuery(asciiQuery);
     });
@@ -154,4 +154,54 @@ class SearchViewState extends ConsumerState<SearchView> {
       ),
     );
   }
+}
+
+const _accentFolds = {
+  'a': 'àáâãäåāăą',
+  'c': 'çćčĉċ',
+  'd': 'ďđ',
+  'e': 'èéêëēĕėęě',
+  'g': 'ĝğġģ',
+  'h': 'ĥħ',
+  'i': 'ìíîïĩīĭįı',
+  'j': 'ĵ',
+  'k': 'ķ',
+  'l': 'ĺļľŀł',
+  'n': 'ñńņňŉ',
+  'o': 'òóôõöøōŏő',
+  'r': 'ŕŗř',
+  's': 'śŝşšș',
+  't': 'ţťŧț',
+  'u': 'ùúûüũūŭůűų',
+  'w': 'ŵ',
+  'y': 'ýÿŷ',
+  'z': 'źżž',
+  'ae': 'æ',
+  'oe': 'œ',
+  'ss': 'ß',
+};
+
+final _accentToAscii = {
+  for (final entry in _accentFolds.entries)
+    for (final rune in entry.value.runes) String.fromCharCode(rune): entry.key,
+};
+
+/// What is sent to the search backend, which is ASCII-only. Accented letters
+/// are folded to their base letter ("meditación" searches "meditacion");
+/// dropping them instead searched for "meditacin" and found nothing. Anything
+/// still outside ASCII is removed and the ends are trimmed.
+String asciiSearchQuery(String input) {
+  final folded = StringBuffer();
+  for (final rune in input.runes) {
+    final char = String.fromCharCode(rune);
+    if (rune < 0x80) {
+      folded.write(char);
+      continue;
+    }
+    final lower = char.toLowerCase();
+    final base = _accentToAscii[lower];
+    if (base == null) continue;
+    folded.write(char == lower ? base : base.toUpperCase());
+  }
+  return folded.toString().trim();
 }
