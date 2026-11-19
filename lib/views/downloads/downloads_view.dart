@@ -25,7 +25,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../bottom_navigation/bottom_navigation_bar_view.dart';
 import '../empty_widget.dart';
 import '../player/player_view.dart';
-import 'package:medito/constants/theme/medito_text.dart';
+import '../splash_view.dart';
+
+import 'package:medito/constants/constants.dart';
+import 'package:medito/constants/strings/analytics_event_constants.dart';
+import 'package:medito/routes/routes.dart';
 
 class DownloadsView extends ConsumerStatefulWidget {
   const DownloadsView({super.key, this.isRoot = false});
@@ -55,8 +59,10 @@ class _DownloadsViewState extends ConsumerState<DownloadsView>
     final available = watch.value?.available ?? false;
 
     return Scaffold(
+      // As the root screen the app could not reach the server at launch.
+      // Without this bar there was no way out short of force-quitting.
       bottomNavigationBar: widget.isRoot
-          ? null
+          ? const OfflineRetryBar()
           : SingleBackButtonActionBar(
               onBackPressed: () {
                 Navigator.pop(context);
@@ -250,9 +256,8 @@ class _DownloadsViewState extends ConsumerState<DownloadsView>
               Icon(
                 Icons.schedule,
                 size: 14,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: 0.6),
               ),
             const SizedBox(width: 6),
           ],
@@ -376,9 +381,8 @@ class _DownloadsViewState extends ConsumerState<DownloadsView>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.06),
+              color: Theme.of(context).colorScheme.onSurface
+                  .withValues(alpha: 0.06),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -424,9 +428,8 @@ class _DownloadsViewState extends ConsumerState<DownloadsView>
   DownloadListItemWidget _getListItemWidget(Track item, int index) {
     final firstVoice = item.voices.first;
     final firstFile = firstVoice.audioFiles.first;
-    var audioLength = Duration(
-      milliseconds: firstFile.duration,
-    ).inMinutes.toString();
+    var audioLength = Duration(milliseconds: firstFile.duration).inMinutes
+        .toString();
     var guideName = firstVoice.guideName;
     var duration = _getDuration(audioLength);
     var subTitle = _sessionSubtitle(guideName, duration);
@@ -839,4 +842,69 @@ class _PendingDelete {
   final Track track;
   final Timer timer;
   final Future<void> Function() commit;
+}
+
+/// Bottom bar of [DownloadsView] when the app fell back to it at launch:
+/// says what still works and offers to try connecting again, which restarts
+/// the launch flow from the splash screen.
+class OfflineRetryBar extends StatelessWidget {
+  const OfflineRetryBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.cardColor,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.offlineDownloadsMessage,
+                style: context.text.muted.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => handleNavigation(
+                        TypeConstants.route,
+                        [RouteConstants.timer],
+                        context,
+                        timerSource: AnalyticsEventConstants.sourceOffline,
+                      ),
+                      child: Text(l10n.openTimer),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SplashView(),
+                          settings: const RouteSettings(
+                            name: SplashView.routeName,
+                          ),
+                        ),
+                        (route) => false,
+                      ),
+                      child: Text(l10n.tryAgain),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

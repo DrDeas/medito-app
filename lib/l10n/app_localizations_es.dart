@@ -3697,4 +3697,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get donationAsksOffDescription => 'No me pidan donar nunca';
+
+  @override
+  String get offlineDownloadsMessage =>
+      'Medito no pudo conectarse. Tus descargas y el temporizador siguen funcionando.';
 }

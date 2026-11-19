@@ -1554,5 +1554,6 @@
   "donationAsksOff": "Desactivados",
   "donationAsksSheetBody": "Medito es gratis y se financia solo con donaciones, por eso de vez en cuando te lo pedimos. Si prefieres que no lo hagamos, desactiva esta opción: no verás tarjetas de donación después de las sesiones ni en Inicio, ni recibirás notificaciones de donación. Siempre puedes donar desde Ajustes.",
   "donationAsksOnDescription": "Peticiones ocasionales y discretas después de una sesión",
-  "donationAsksOffDescription": "No me pidan donar nunca"
+  "donationAsksOffDescription": "No me pidan donar nunca",
+  "offlineDownloadsMessage": "Medito no pudo conectarse. Tus descargas y el temporizador siguen funcionando."
 }

@@ -6429,6 +6429,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Never ask me to donate'**
   String get donationAsksOffDescription;
+
+  /// Shown at the bottom of the Downloads screen when the app opened there because it could not reach the server
+  ///
+  /// In en, this message translates to:
+  /// **'Medito could not connect. Your downloads and the timer still work.'**
+  String get offlineDownloadsMessage;
 }
 
 class _AppLocalizationsDelegate

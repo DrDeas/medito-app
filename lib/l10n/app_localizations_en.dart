@@ -3639,4 +3639,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get donationAsksOffDescription => 'Never ask me to donate';
+
+  @override
+  String get offlineDownloadsMessage =>
+      'Medito could not connect. Your downloads and the timer still work.';
 }

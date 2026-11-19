@@ -2799,5 +2799,7 @@
   "donationAsksOnDescription": "Occasional, gentle asks after a session",
   "@donationAsksOnDescription": {"description": "Description of the On option in the Donation reminders sheet"},
   "donationAsksOffDescription": "Never ask me to donate",
-  "@donationAsksOffDescription": {"description": "Description of the Off option in the Donation reminders sheet"}
+  "@donationAsksOffDescription": {"description": "Description of the Off option in the Donation reminders sheet"},
+  "offlineDownloadsMessage": "Medito could not connect. Your downloads and the timer still work.",
+  "@offlineDownloadsMessage": {"description": "Shown at the bottom of the Downloads screen when the app opened there because it could not reach the server"}
 }

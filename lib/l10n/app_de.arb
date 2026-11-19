@@ -1948,5 +1948,6 @@
   "donationAsksOff": "Aus",
   "donationAsksSheetBody": "Medito ist kostenlos und finanziert sich ausschließlich durch Spenden, deshalb fragen wir hin und wieder. Wenn du nicht gefragt werden möchtest, schalte dies aus: keine Spendenkarten nach Sitzungen oder auf der Startseite und keine Spenden-Mitteilungen. Spenden kannst du weiterhin jederzeit in den Einstellungen.",
   "donationAsksOnDescription": "Gelegentliche, zurückhaltende Hinweise nach einer Sitzung",
-  "donationAsksOffDescription": "Mich nie um Spenden bitten"
+  "donationAsksOffDescription": "Mich nie um Spenden bitten",
+  "offlineDownloadsMessage": "Medito konnte keine Verbindung herstellen. Deine Downloads und der Timer funktionieren weiterhin."
 }

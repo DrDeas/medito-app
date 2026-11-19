@@ -388,6 +388,20 @@ class SplashViewState extends ConsumerState<SplashView>
     try {
       await auth.signInAnonymously();
 
+      // The repository reports a failed sign-in by not signing in rather than
+      // by throwing. Carrying on regardless sent a new user through all of
+      // onboarding and into an app where every request was refused until the
+      // next cold start. Stay here instead: the button is live again and a
+      // second tap retries.
+      if (!await auth.isLoggedIn()) {
+        if (!mounted) return;
+        showSnackBar(
+          context,
+          AppLocalizations.of(context)!.connectivityErrorMessage,
+        );
+        return;
+      }
+
       // Set user ID for analytics immediately after anonymous sign in
       try {
         final userId = ref.read(userIdProvider);

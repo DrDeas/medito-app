@@ -192,6 +192,20 @@ void main() {
     await _settle(tester);
   }
 
+  testWidgets('as the offline fallback it offers a way back in', (tester) async {
+    await pumpDownloads(tester);
+
+    expect(find.byType(OfflineRetryBar), findsOneWidget);
+    expect(
+      find.text(
+        'Medito could not connect. Your downloads and the timer still work.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(ElevatedButton, 'Try again'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Open timer'), findsOneWidget);
+  });
+
   testWidgets('swipe hides the row and Undo brings it back untouched', (
     tester,
   ) async {
