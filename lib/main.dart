@@ -18,6 +18,7 @@ import 'package:medito/constants/theme/app_theme.dart';
 import 'package:medito/firebase_options.dart';
 import 'package:medito/providers/auth/auth_state_provider.dart';
 import 'package:medito/providers/notification/reminder_provider.dart';
+import 'package:medito/services/reminders/daily_reminders_service.dart';
 import 'package:medito/providers/locale_provider.dart';
 import 'package:medito/providers/downloads/download_automation_provider.dart';
 import 'package:medito/providers/providers.dart';
@@ -278,6 +279,20 @@ class _ParentWidgetState extends ConsumerState<ParentWidget>
     unawaited(AppOpenTracker.instance.onColdStart());
     unawaited(ref.read(firebaseMessagingProvider).registerOpenTracking(ref));
     unawaited(FirebaseAnalyticsService.applyRemindersOnProperty());
+    unawaited(_realignReminders());
+  }
+
+  /// Keeps daily reminders on the clock time the user chose after the
+  /// device has changed time zone.
+  Future<void> _realignReminders() async {
+    try {
+      await DailyRemindersScheduler(
+        prefs: ref.read(sharedPreferencesProvider),
+        reminders: ref.read(reminderProvider),
+      ).realignToCurrentTimeZone();
+    } catch (e) {
+      AppLogger.w('REMINDER', 'Could not realign reminders: $e');
+    }
   }
 
   /// If a previous run was force-quit mid-session and sent no event, recover
@@ -475,6 +490,7 @@ class _ParentWidgetState extends ConsumerState<ParentWidget>
     ref.read(statsProvider.notifier).refresh();
     // Notification permission can be revoked in system settings while away.
     unawaited(FirebaseAnalyticsService.applyRemindersOnProperty());
+    unawaited(_realignReminders());
 
     // Diagnose token state for debug purposes
     _diagnoseSecurity();

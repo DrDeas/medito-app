@@ -156,6 +156,24 @@ DateTime anchorAfterHistoryChange(
   return DateTime(now.year, now.month, now.day + 1, time.hour, time.minute);
 }
 
+/// The local wall-clock time a pending reminder was planned for, re-resolved
+/// in the zone the device is in now, or null when [payload] carries no plan.
+///
+/// Reminders are scheduled as absolute instants. After a flight a 07:00
+/// reminder therefore kept firing at 07:00 back home, at whatever hour that
+/// is locally. The payload records the planned instant and the UTC offset in
+/// force when it was planned, which together give back the clock time meant.
+DateTime? plannedWallClockInCurrentZone(Map<String, dynamic> payload) {
+  final plannedAt = payload['scheduled_at'];
+  final offsetMinutes = payload['scheduled_utc_offset_min'];
+  if (plannedAt is! int || offsetMinutes is! int) return null;
+  final wall = DateTime.fromMillisecondsSinceEpoch(
+    plannedAt * 1000,
+    isUtc: true,
+  ).add(Duration(minutes: offsetMinutes));
+  return DateTime(wall.year, wall.month, wall.day, wall.hour, wall.minute);
+}
+
 class DailyRemindersService {
   final SharedPreferences prefs;
   final ReminderProvider reminders;
@@ -360,6 +378,50 @@ class DailyRemindersScheduler {
     final first = TimeOfDay(hour: anchor.hour, minute: anchor.minute);
     await prefs.setInt(SharedPreferenceConstants.savedHours, first.hour);
     await prefs.setInt(SharedPreferenceConstants.savedMinutes, first.minute);
+  }
+
+  /// Moves pending series reminders back onto the clock time they were
+  /// planned for when the device's time zone has changed since (travel).
+  /// Each keeps its day number and wording; only the instant moves. Returns
+  /// how many were moved. Cheap when nothing changed: one read of the
+  /// pending list and no writes.
+  Future<int> realignToCurrentTimeZone() async {
+    final enabled =
+        prefs.getBool(SharedPreferenceConstants.dailyReminderEnabled) ?? false;
+    if (!enabled) return 0;
+
+    final now = _now();
+    final moved = <ScheduledReminder>[];
+    for (final pending in await reminders.getPendingNotifications()) {
+      final inSeries =
+          pending.id >= reminderSeriesBaseId &&
+          pending.id <= reminderSeriesBaseId + 15;
+      if (!inSeries) continue;
+      final data = NotificationTiming.decode(pending.payload);
+      final wall = plannedWallClockInCurrentZone(data);
+      if (wall == null || !wall.isAfter(now)) continue;
+      if (wall.millisecondsSinceEpoch ~/ 1000 == data['scheduled_at']) continue;
+      final day = data[AnalyticsEventConstants.paramNotificationDay];
+      moved.add(
+        ScheduledReminder(
+          id: pending.id,
+          scheduledDate: tz.TZDateTime.from(wall, tz.local),
+          title: pending.title ?? '',
+          body: pending.body ?? '',
+          payload: reminderPayload(
+            day is int ? day : 1,
+            scheduledAt: wall,
+            notificationId: pending.id,
+          ),
+        ),
+      );
+    }
+    if (moved.isEmpty) return 0;
+
+    AppLogger.d('REMINDER', 'Time zone changed: moving ${moved.length}');
+    // Scheduling under an id that is already pending replaces that request.
+    await reminders.scheduleReminderSeries(moved);
+    return moved.length;
   }
 
   Future<void> rescheduleAfterSession({

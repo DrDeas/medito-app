@@ -54,10 +54,21 @@ class _ReminderTileState extends ConsumerState<ReminderTile> {
   bool _notificationsBlocked = false;
   bool _busy = false;
 
+  // The Settings tab stays mounted, so re-read the permission whenever the
+  // app returns: that is when a change made in iOS Settings takes effect.
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
     _checkNotificationPermission();
+    _lifecycle = AppLifecycleListener(onResume: _checkNotificationPermission);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   Future<void> _checkNotificationPermission() async {
@@ -244,11 +255,11 @@ class _ReminderTileState extends ConsumerState<ReminderTile> {
   }
 
   String _subtitle(AppLocalizations l10n, bool enabled, TimeOfDay? time) {
-    if (!enabled || time == null) {
-      return _notificationsBlocked
-          ? l10n.notificationsBlockedSubtitle
-          : l10n.reminderOff;
-    }
+    // Blocked wins over the saved time: with notifications turned off in
+    // iOS Settings nothing will arrive, and showing the time as if it would
+    // is how a reminder goes quiet without the user knowing why.
+    if (_notificationsBlocked) return l10n.notificationsBlockedSubtitle;
+    if (!enabled || time == null) return l10n.reminderOff;
     final slot = ReminderSlot.forTime(time);
     final formatted = time.format(context);
     return slot == null ? formatted : '${slot.label(l10n)} · $formatted';
