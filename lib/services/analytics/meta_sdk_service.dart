@@ -71,6 +71,18 @@ class MetaSdkService {
       _initialised = true;
       AppLogger.d('META', 'Meta SDK enabled at runtime');
     } else if (!enabled) {
+      // Tell the native SDK as well: dropping the Dart reference stops our
+      // own events but not the SDK's automatic ones for the rest of this run.
+      // From the next launch the app delegate does not start the SDK at all.
+      try {
+        if (facebookAppId.isNotEmpty && !isDevFlavor) {
+          await (_events ?? FacebookAppEvents()).setAutoLogAppEventsEnabled(
+            false,
+          );
+        }
+      } catch (e) {
+        AppLogger.w('META', 'Could not stop automatic Meta events: $e');
+      }
       _events = null;
       AppLogger.d('META', 'Meta SDK disabled at runtime');
     }

@@ -20,11 +20,21 @@ class AppDelegate: FlutterAppDelegate {
         // Initialize Firebase
         FirebaseApp.configure()
         
-        // Initialize Facebook SDK
-        ApplicationDelegate.shared.application(
-            application,
-            didFinishLaunchingWithOptions: launchOptions
-        )
+        // Start the Facebook SDK only for people who have not turned Meta
+        // analytics off. The in-app switch is stored by shared_preferences
+        // under its "flutter." prefix; before this check the native SDK
+        // started and auto-logged on every launch whatever the switch said.
+        let metaEnabled = UserDefaults.standard.object(
+            forKey: "flutter.analytics_meta_enabled"
+        ) as? Bool ?? true
+        Settings.shared.isAutoLogAppEventsEnabled = metaEnabled
+        Settings.shared.isAdvertiserIDCollectionEnabled = metaEnabled
+        if metaEnabled {
+            ApplicationDelegate.shared.application(
+                application,
+                didFinishLaunchingWithOptions: launchOptions
+            )
+        }
 
         // Register Flutter plugins
         GeneratedPluginRegistrant.register(with: self)
