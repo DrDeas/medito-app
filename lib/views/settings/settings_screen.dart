@@ -16,6 +16,8 @@ import 'package:medito/routes/routes.dart';
 import 'package:medito/services/analytics/firebase_analytics_service.dart';
 import 'package:medito/utils/utils.dart';
 import 'package:medito/views/debug/debug_info_screen.dart';
+import 'package:medito/views/downloads/downloads_view.dart';
+import 'package:medito/views/favorites/favorites_view.dart';
 import 'package:medito/views/home/widgets/bottom_sheet/row_item_widget.dart';
 import 'package:medito/views/settings/advanced_settings_screen.dart';
 import 'package:medito/views/settings/appearance_settings_screen.dart';
@@ -372,6 +374,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildSectionTitle(context, AppLocalizations.of(context)!.account),
             _buildSectionCard([const AccountSectionWidget(inCard: true)]),
           ],
+          // Favorites and Downloads were only reachable through Home
+          // shortcuts the server chooses, so they could simply be missing.
+          _buildSectionTitle(context, l10n.yourLibrary),
+          _buildSectionCard([
+            RowItemWidget(
+              icon: MeditoIcon(assetName: MeditoIcons.star, color: onSurface),
+              title: l10n.favorites,
+              onTap: () => push(const FavoritesView()),
+            ),
+            RowItemWidget(
+              icon: MeditoIcon(
+                assetName: MeditoIcons.downloadCircle,
+                color: onSurface,
+              ),
+              title: l10n.downloads,
+              hasUnderline: false,
+              onTap: () => push(const DownloadsView()),
+            ),
+          ]),
           _buildSectionTitle(context, l10n.supportMedito),
           _buildSectionCard([
             ...tiles(_sectionSupport, endsCard: false),

@@ -3714,4 +3714,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get playerStartOver => 'Von vorn beginnen';
+
+  @override
+  String get yourLibrary => 'Deine Bibliothek';
 }

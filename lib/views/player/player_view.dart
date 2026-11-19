@@ -40,6 +40,7 @@ import 'package:medito/constants/strings/analytics_event_constants.dart';
 import 'package:medito/l10n/app_localizations.dart';
 import 'package:medito/widgets/report_button_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -513,6 +514,9 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
   }
 
   void onPlayPausePressed() {
+    // A light tap under the finger: with eyes closed there is otherwise no
+    // confirmation that the press registered.
+    unawaited(HapticFeedback.lightImpact());
     final isPlaying = ref.read(audioStateProvider).isPlaying;
 
     // Control primary track

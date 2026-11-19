@@ -3651,4 +3651,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerStartOver => 'Start over';
+
+  @override
+  String get yourLibrary => 'Your library';
 }

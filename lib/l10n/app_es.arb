@@ -1557,5 +1557,6 @@
   "donationAsksOffDescription": "No me pidan donar nunca",
   "offlineDownloadsMessage": "Medito no pudo conectarse. Tus descargas y el temporizador siguen funcionando.",
   "playerResumedFrom": "Continuamos donde lo dejaste, en {time}",
-  "playerStartOver": "Empezar de nuevo"
+  "playerStartOver": "Empezar de nuevo",
+  "yourLibrary": "Tu biblioteca"
 }

@@ -1951,5 +1951,6 @@
   "donationAsksOffDescription": "Mich nie um Spenden bitten",
   "offlineDownloadsMessage": "Medito konnte keine Verbindung herstellen. Deine Downloads und der Timer funktionieren weiterhin.",
   "playerResumedFrom": "Weiter an der Stelle, an der du aufgehört hast: {time}",
-  "playerStartOver": "Von vorn beginnen"
+  "playerStartOver": "Von vorn beginnen",
+  "yourLibrary": "Deine Bibliothek"
 }

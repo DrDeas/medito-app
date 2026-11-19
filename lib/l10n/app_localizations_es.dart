@@ -3709,4 +3709,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get playerStartOver => 'Empezar de nuevo';
+
+  @override
+  String get yourLibrary => 'Tu biblioteca';
 }

@@ -106,14 +106,16 @@ class _DurationIndicatorWidgetState
     );
 
     return Padding(
-      padding: const EdgeInsets.only(left: 32, right: 32, top: 0, bottom: 0),
+      // The player already insets its controls; a second full inset here
+      // left a seek bar barely half the width of a small phone.
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         children: [
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 6,
               trackShape: CustomTrackShape(addTopPadding: false),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
             ),
             // The Slider is its own semantics node, so a label around it
             // never named it, and its swipe step was a share of the track

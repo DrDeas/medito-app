@@ -2805,5 +2805,7 @@
   "playerResumedFrom": "Picked up where you left off, at {time}",
   "@playerResumedFrom": {"description": "Snackbar in the player when a long session resumes from a saved position; time is like 12:34", "placeholders": {"time": {"type": "String"}}},
   "playerStartOver": "Start over",
-  "@playerStartOver": {"description": "Snackbar action that restarts the session from the beginning instead of resuming"}
+  "@playerStartOver": {"description": "Snackbar action that restarts the session from the beginning instead of resuming"},
+  "yourLibrary": "Your library",
+  "@yourLibrary": {"description": "Settings section holding Favorites and Downloads"}
 }

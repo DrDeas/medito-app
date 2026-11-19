@@ -6447,6 +6447,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start over'**
   String get playerStartOver;
+
+  /// Settings section holding Favorites and Downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Your library'**
+  String get yourLibrary;
 }
 
 class _AppLocalizationsDelegate
