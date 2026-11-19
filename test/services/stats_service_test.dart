@@ -63,9 +63,8 @@ void main() {
       };
 
       // Mock the API call
-      when(
-        mockHttpApiService.getRequest(HTTPConstants.allStats),
-      ).thenAnswer((_) async => serverResponse);
+      when(mockHttpApiService.getRequest(HTTPConstants.allStats))
+          .thenAnswer((_) async => serverResponse);
 
       // Also stub the getLatestBackup method to return a stats object with non-zero streak
       // This is needed because LocalAllStats.fromAllStats always sets streakCurrent to 0
@@ -80,9 +79,8 @@ void main() {
         updated: timestamp,
       );
 
-      when(
-        mockBackupService.getLatestBackup(any),
-      ).thenAnswer((_) async => mockStats);
+      when(mockBackupService.getLatestBackup(any))
+          .thenAnswer((_) async => mockStats);
 
       // Act - call the actual service
       final result = await statsService.fetchAllStats();
@@ -126,13 +124,11 @@ void main() {
         updated: DateTime.now().millisecondsSinceEpoch,
       );
 
-      when(
-        mockHttpApiService.getRequest(HTTPConstants.allStats),
-      ).thenAnswer((_) async => emptyServerStats);
+      when(mockHttpApiService.getRequest(HTTPConstants.allStats))
+          .thenAnswer((_) async => emptyServerStats);
 
-      when(
-        mockBackupService.getLatestBackup(userId),
-      ).thenAnswer((_) async => backupStats);
+      when(mockBackupService.getLatestBackup(userId))
+          .thenAnswer((_) async => backupStats);
 
       // Act
       final result = await statsService.fetchAllStats();
@@ -162,13 +158,11 @@ void main() {
         updated: DateTime.now().millisecondsSinceEpoch,
       );
 
-      when(
-        mockHttpApiService.getRequest(HTTPConstants.allStats),
-      ).thenThrow(Exception('Network error'));
+      when(mockHttpApiService.getRequest(HTTPConstants.allStats))
+          .thenThrow(Exception('Network error'));
 
-      when(
-        mockBackupService.getLatestBackup(userId),
-      ).thenAnswer((_) async => backupStats);
+      when(mockBackupService.getLatestBackup(userId))
+          .thenAnswer((_) async => backupStats);
 
       // Act
       final result = await statsService.fetchAllStats();
@@ -184,13 +178,11 @@ void main() {
       'should return empty stats when server fails and no backup exists',
       () async {
         // Arrange
-        when(
-          mockHttpApiService.getRequest(HTTPConstants.allStats),
-        ).thenThrow(Exception('Network error'));
+        when(mockHttpApiService.getRequest(HTTPConstants.allStats))
+            .thenThrow(Exception('Network error'));
 
-        when(
-          mockBackupService.getLatestBackup(userId),
-        ).thenAnswer((_) async => null);
+        when(mockBackupService.getLatestBackup(userId))
+            .thenAnswer((_) async => null);
 
         // Act
         final result = await statsService.fetchAllStats();
@@ -223,22 +215,19 @@ void main() {
         updated: DateTime.now().millisecondsSinceEpoch,
       );
 
-      when(
-        mockBackupService.backupStats(any, any),
-      ).thenAnswer((_) async => true);
+      when(mockBackupService.backupStats(any, any))
+          .thenAnswer((_) async => true);
 
-      when(
-        mockHttpApiService.postRequest(any, body: anyNamed('body')),
-      ).thenAnswer((_) async => {});
+      when(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+          .thenAnswer((_) async => {});
 
       // Act
       await statsService.postStats(stats);
 
       // Assert
       verify(mockBackupService.backupStats(any, any)).called(1);
-      verify(
-        mockHttpApiService.postRequest(any, body: anyNamed('body')),
-      ).called(1);
+      verify(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+          .called(1);
     });
 
     test('should not post empty stats to server', () async {
@@ -257,22 +246,19 @@ void main() {
       // Arrange
       final emptyStats = LocalAllStats.empty();
 
-      when(
-        mockBackupService.backupStats(any, any, force: anyNamed('force')),
-      ).thenAnswer((_) async => true);
+      when(mockBackupService.backupStats(any, any, force: anyNamed('force')))
+          .thenAnswer((_) async => true);
 
-      when(
-        mockHttpApiService.postRequest(any, body: anyNamed('body')),
-      ).thenAnswer((_) async => {});
+      when(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+          .thenAnswer((_) async => {});
 
       // Act
       await statsService.postStats(emptyStats, force: true);
 
       // Assert - the empty history is backed up and sent, so a later restore
       // or a fresh launch cannot bring the deleted session back.
-      verify(
-        mockBackupService.backupStats(emptyStats, userId, force: true),
-      ).called(1);
+      verify(mockBackupService.backupStats(emptyStats, userId, force: true))
+          .called(1);
 
       final body =
           verify(
@@ -305,23 +291,20 @@ void main() {
       );
 
       // First backup succeeds
-      when(
-        mockBackupService.backupStats(any, any),
-      ).thenAnswer((_) async => true);
+      when(mockBackupService.backupStats(any, any))
+          .thenAnswer((_) async => true);
 
       // Server post fails
-      when(
-        mockHttpApiService.postRequest(any, body: anyNamed('body')),
-      ).thenThrow(Exception('Network error'));
+      when(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+          .thenThrow(Exception('Network error'));
 
-      // Act
-      await statsService.postStats(stats);
+      // Act: the failure is reported, after the backup was taken.
+      await expectLater(statsService.postStats(stats), throwsException);
 
       // Assert - should only backup once since the first backup succeeded
       verify(mockBackupService.backupStats(any, any)).called(1);
-      verify(
-        mockHttpApiService.postRequest(any, body: anyNamed('body')),
-      ).called(1);
+      verify(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+          .called(1);
     });
 
     test(
@@ -354,18 +337,16 @@ void main() {
         });
 
         // Server post fails
-        when(
-          mockHttpApiService.postRequest(any, body: anyNamed('body')),
-        ).thenThrow(Exception('Network error'));
+        when(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+            .thenThrow(Exception('Network error'));
 
         // Act
-        await statsService.postStats(stats);
+        await expectLater(statsService.postStats(stats), throwsException);
 
         // Assert - should try to backup twice (once before posting, once after failure)
         verify(mockBackupService.backupStats(any, any)).called(2);
-        verify(
-          mockHttpApiService.postRequest(any, body: anyNamed('body')),
-        ).called(1);
+        verify(mockHttpApiService.postRequest(any, body: anyNamed('body')))
+            .called(1);
       },
     );
   });

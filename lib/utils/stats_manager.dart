@@ -47,6 +47,7 @@ class StatsManager {
   DateTime? _testDate;
   DateTime? _lastSyncedAt;
   bool _dirty = false;
+  static const _pendingRemovalsKey = 'stats_pending_removals';
   Duration _dayBoundaryOffset = Duration.zero;
 
   // Bumped by clearAllStats. A sync that was already fetching when the stats
@@ -69,6 +70,65 @@ class StatsManager {
       return checkLock == now;
     }
     return false;
+  }
+
+  /// Sessions removed or moved locally whose removal the server has not
+  /// confirmed yet, as `id_timestamp` keys. The merge is a union, so without
+  /// this a delete made offline (or one whose upload failed) came back on the
+  /// next sync. Kept on disk: the upload may only succeed after a restart.
+  Set<String> _pendingRemovals() =>
+      (_prefs.getStringList(_pendingRemovalsKey) ?? const <String>[]).toSet();
+
+  Future<void> _rememberRemoval(LocalAudioCompleted session) async {
+    final keys = _pendingRemovals()..add(_sessionKey(session));
+    await _prefs.setStringList(_pendingRemovalsKey, keys.toList());
+  }
+
+  static String _sessionKey(LocalAudioCompleted session) =>
+      '${session.id}_${session.timestamp}';
+
+  /// [remote] without the sessions this device removed but has not yet
+  /// managed to remove on the server, and with its completion count lowered
+  /// to match, so the merge cannot bring them back.
+  LocalAllStats _withoutPendingRemovals(LocalAllStats remote) {
+    final pending = _pendingRemovals();
+    final sessions = remote.audioCompleted;
+    if (pending.isEmpty || sessions == null) return remote;
+    final kept = sessions
+        .where((session) => !pending.contains(_sessionKey(session)))
+        .toList();
+    final dropped = sessions.length - kept.length;
+    if (dropped == 0) return remote;
+    return remote.copyWith(
+      audioCompleted: kept,
+      totalTracksCompleted: (remote.totalTracksCompleted - dropped).clamp(
+        0,
+        1 << 31,
+      ),
+    );
+  }
+
+  /// Call after the server accepted the current stats: they are the server
+  /// copy now, so nothing is unsynced and no removal is still pending.
+  Future<void> _markSynced() async {
+    _lastSyncedAt = _getCurrentDate();
+    await _saveLastSyncedAt();
+    _dirty = false;
+    if (_prefs.containsKey(_pendingRemovalsKey)) {
+      await _prefs.remove(_pendingRemovalsKey);
+    }
+  }
+
+  /// Uploads the current stats where the local change is already saved and
+  /// is what the user sees. A failed upload is not the caller's failure: the
+  /// stats stay dirty and the next sync pushes them.
+  Future<void> _postOrDefer({bool force = false}) async {
+    try {
+      await _statsService.postStats(_allStats!, force: force);
+      await _markSynced();
+    } catch (e) {
+      AppLogger.w('STATS_MANAGER', 'Upload deferred to the next sync: $e');
+    }
   }
 
   Future<void> _releaseLock() async {
@@ -225,11 +285,7 @@ class StatsManager {
 
       await saveConsistencyScoreHistory(newConsistencyScore);
       await _saveLocalAllStatsToSharedPrefs();
-      await _statsService.postStats(_allStats!);
-      // Mark as synced and clear dirty flag after successful POST
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
 
       // Update home widget (fire-and-forget to avoid blocking)
       HomeWidgetService.updateWidgetFromStats(_allStats!).catchError((e) {
@@ -281,6 +337,7 @@ class StatsManager {
   }
 
   Future<void> _merge(LocalAllStats remoteStats) async {
+    remoteStats = _withoutPendingRemovals(remoteStats);
     // Check if remote stats contain recent dummy data
     var now = _getCurrentDate();
     var today = DateTime(now.year, now.month, now.day);
@@ -610,14 +667,10 @@ class StatsManager {
       // The session is saved on disk but may not be on the server: the local
       // write runs before the POST, and a failed POST leaves the history
       // dirty. This replay is a second chance to push it. Without the flush,
-      // returning false tells the platform the work is done and it clears its
-      // payload, so the server never gets the session. A flush that still
-      // fails throws, and handleStats keeps the payload pending.
+      // the server would wait for the next sync to learn of the session. A
+      // flush that still fails leaves the history dirty for that sync.
       if (_needsServerFlush(audioCompleted)) {
-        await _statsService.postStats(_allStats!);
-        _lastSyncedAt = _getCurrentDate();
-        await _saveLastSyncedAt();
-        _dirty = false;
+        await _postOrDefer();
       }
       AppLogger.d(
         'STATS_MANAGER',
@@ -659,11 +712,7 @@ class StatsManager {
         return true;
       }
 
-      await _statsService.postStats(_allStats!);
-      // Mark as synced and clear dirty flag after successful POST
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
 
       // Update home widget (fire-and-forget to avoid blocking)
       HomeWidgetService.updateWidgetFromStats(_allStats!).catchError((e) {
@@ -705,10 +754,7 @@ class StatsManager {
     // The local write is the record; don't surface a post failure (the caller
     // would retry and double-count). _dirty stays true so the next sync pushes.
     try {
-      await _statsService.postStats(_allStats!);
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
     } catch (e) {
       AppLogger.e(
         'STATS_MANAGER',
@@ -726,10 +772,7 @@ class StatsManager {
   /// made with `skipPost: true`. No-op if there's nothing to flush.
   Future<void> flushPendingPost() async {
     if (!_dirty || _allStats == null) return;
-    await _statsService.postStats(_allStats!);
-    _lastSyncedAt = _getCurrentDate();
-    await _saveLastSyncedAt();
-    _dirty = false;
+    await _postOrDefer();
   }
 
   /// Replaces the current stats with the given snapshot, recalculates
@@ -762,10 +805,7 @@ class StatsManager {
     // because the server sync hiccupped. _dirty stays true so the next
     // sync retries automatically.
     try {
-      await _statsService.postStats(_allStats!);
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
     } catch (e) {
       AppLogger.e(
         'STATS_MANAGER',
@@ -805,6 +845,7 @@ class StatsManager {
       throw StateError('A matching session already exists');
     }
     sessions[index] = replacement;
+    await _rememberRemoval(original);
     await restoreFromBackup(_allStats!.copyWith(audioCompleted: sessions));
     return true;
   }
@@ -827,6 +868,7 @@ class StatsManager {
     }
 
     _dirty = true;
+    await _rememberRemoval(session);
 
     final newTotalTracks = (_allStats!.totalTracksCompleted - 1).clamp(
       0,
@@ -848,10 +890,7 @@ class StatsManager {
     await _saveLocalAllStatsToSharedPrefs(force: true);
     // force: the empty history is the user's intent here. Without it the
     // service skips the POST and the server keeps the deleted session.
-    await _statsService.postStats(_allStats!, force: true);
-    _lastSyncedAt = _getCurrentDate();
-    await _saveLastSyncedAt();
-    _dirty = false;
+    await _postOrDefer(force: true);
 
     HomeWidgetService.updateWidgetFromStats(_allStats!).catchError((e) {
       // Silently fail - widget updates are not critical
@@ -878,11 +917,7 @@ class StatsManager {
       );
 
       await _saveLocalAllStatsToSharedPrefs();
-      await _statsService.postStats(_allStats!);
-      // Mark as synced and clear dirty flag after successful POST
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
     }
   }
 
@@ -924,10 +959,7 @@ class StatsManager {
       );
 
       await _saveLocalAllStatsToSharedPrefs();
-      await _statsService.postStats(_allStats!);
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
     }
   }
 
@@ -948,11 +980,7 @@ class StatsManager {
       );
 
       await _saveLocalAllStatsToSharedPrefs();
-      await _statsService.postStats(_allStats!);
-      // Mark as synced and clear dirty flag after successful POST
-      _lastSyncedAt = _getCurrentDate();
-      await _saveLastSyncedAt();
-      _dirty = false;
+      await _postOrDefer();
     }
   }
 
@@ -964,6 +992,9 @@ class StatsManager {
     _dirty = false;
     var prefs = _prefs;
     await prefs.remove(SharedPreferenceConstants.localAllStatsKey);
+    // Removals belong to the history being cleared, not to whichever
+    // account signs in next.
+    await prefs.remove(_pendingRemovalsKey);
     _allStats = LocalAllStats.empty();
     // Reset sync timestamp so that sync will run after clearing
     _lastSyncedAt = null;
@@ -1026,7 +1057,8 @@ class StatsManager {
 
     allActivityDates.sort();
     var firstSessionDate = allActivityDates.first;
-    var daysSinceFirstSession = today.difference(firstSessionDate).inDays + 1;
+    var daysSinceFirstSession =
+        calendarDaysBetween(firstSessionDate, today) + 1;
 
     if (daysSinceFirstSession == 1) {
       return allActivityDates.any((date) => date.isAtSameMomentAs(today))
@@ -1044,13 +1076,13 @@ class StatsManager {
     const alpha = 0.1;
     const gracePenalty = 0.5; // value used for a single isolated missed day
 
-    var day29 = firstSessionDate.add(const Duration(days: 28));
+    var day29 = addCalendarDays(firstSessionDate, 28);
     var activeDaysAtDay29 = allActivityDates
         .where((d) => !d.isAfter(day29))
         .length;
     var ema = activeDaysAtDay29 / 29.0;
 
-    var day30 = firstSessionDate.add(const Duration(days: 29));
+    var day30 = addCalendarDays(firstSessionDate, 29);
     var currentDay = day30;
 
     while (!currentDay.isAfter(today)) {
@@ -1065,8 +1097,8 @@ class StatsManager {
       if (hadActivity) {
         dayValue = 1.0;
       } else {
-        var prevDay = currentDay.subtract(const Duration(days: 1));
-        var nextDay = currentDay.add(const Duration(days: 1));
+        var prevDay = addCalendarDays(currentDay, -1);
+        var nextDay = addCalendarDays(currentDay, 1);
         var prevActive = allActivityDates.any(
           (d) =>
               d.year == prevDay.year &&
@@ -1086,7 +1118,7 @@ class StatsManager {
       }
 
       ema = alpha * dayValue + (1 - alpha) * ema;
-      currentDay = currentDay.add(const Duration(days: 1));
+      currentDay = addCalendarDays(currentDay, 1);
     }
 
     return ema.clamp(0.0, 1.0);
@@ -1204,3 +1236,18 @@ class StatsManager {
     }
   }
 }
+
+/// [day] moved by [days] whole calendar days, at local midnight. Adding a
+/// 24-hour Duration instead lands at 23:00 or 01:00 on the far side of a
+/// daylight-saving change, which made day-by-day walks count one day twice
+/// and never reach today.
+DateTime addCalendarDays(DateTime day, int days) =>
+    DateTime(day.year, day.month, day.day + days);
+
+/// Whole calendar days from [from] to [to], unaffected by 23- and 25-hour
+/// days.
+int calendarDaysBetween(DateTime from, DateTime to) => DateTime.utc(
+  to.year,
+  to.month,
+  to.day,
+).difference(DateTime.utc(from.year, from.month, from.day)).inDays;

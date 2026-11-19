@@ -647,6 +647,10 @@ Future<bool> addManualSession({
       manualSession,
       durationMs,
       allowDuplicate: true,
+      // The date and time the user picked is where the entry belongs. Left
+      // un-normalised, an entry just after midnight was treated as a session
+      // that ended then and moved back onto the previous day.
+      timestampIsNormalized: true,
     );
     AppLogger.d(
       'STATS',

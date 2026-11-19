@@ -201,9 +201,12 @@ void main() {
         // Seed the in-memory copy so loading does not run a network sync first.
         statsManager.setStatsForTesting(LocalAllStats.empty());
 
-        await expectLater(
-          statsManager.addAudioCompleted(recorded, durationMs),
-          throwsA(isA<Exception>()),
+        // Local-first: the session is saved and reported as recorded even
+        // though the upload failed, so the end screen, reminders and Health
+        // export are not held back by a dropped connection.
+        expect(
+          await statsManager.addAudioCompleted(recorded, durationMs),
+          isTrue,
         );
         expect(postAttempts, 1);
 
@@ -233,7 +236,7 @@ void main() {
       },
     );
 
-    test('a replay whose retry fails again stays pending', () async {
+    test('a replay whose retry fails again keeps the session', () async {
       final recorded = LocalAudioCompleted(
         id: trackId,
         timestamp: completedAt.millisecondsSinceEpoch,
@@ -248,18 +251,18 @@ void main() {
       // Seed the in-memory copy so loading does not run a network sync first.
       statsManager.setStatsForTesting(LocalAllStats.empty());
 
-      await expectLater(
-        statsManager.addAudioCompleted(recorded, durationMs),
-        throwsA(isA<Exception>()),
+      expect(
+        await statsManager.addAudioCompleted(recorded, durationMs),
+        isTrue,
       );
 
       await restartProcess();
 
-      // The replay throws instead of acknowledging, so handleStats returns
-      // false and the native payload is retried again.
-      await expectLater(
-        statsManager.addAudioCompleted(recorded, durationMs),
-        throwsA(isA<Exception>()),
+      // The replay tries the upload again and adds nothing. A second failure
+      // leaves the history unsynced for the next sync instead of throwing.
+      expect(
+        await statsManager.addAudioCompleted(recorded, durationMs),
+        isFalse,
       );
       expect(postAttempts, 2);
 

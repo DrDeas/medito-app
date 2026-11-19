@@ -217,6 +217,10 @@ class StatsService {
         dev.log('StatsService: Attempting backup again after post failure');
         await _backupService.backupStats(stats, userId, force: force);
       }
+      // Callers clear their "unsynced" state when this returns, so a failed
+      // upload has to be reported. Swallowing it here meant an offline edit
+      // or delete looked synced and was undone by the next merge.
+      rethrow;
     }
   }
 

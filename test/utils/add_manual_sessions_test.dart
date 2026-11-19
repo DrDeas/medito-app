@@ -267,4 +267,21 @@ void main() {
       expect(statsManager.currentStats!.streakCurrent, 0);
     });
   });
+
+  test('a manual session just after midnight stays on the day picked', () async {
+    final picked = DateTime(2026, 4, 27, 0, 10);
+
+    final added = await addManualSession(
+      dateTime: picked,
+      durationMinutes: 20,
+      statsManager: statsManager,
+    );
+
+    expect(added, isTrue);
+    final stats = await statsManager.localAllStats;
+    final entry = DateTime.fromMillisecondsSinceEpoch(
+      stats.audioCompleted!.single.timestamp,
+    );
+    expect(entry, picked);
+  });
 }
