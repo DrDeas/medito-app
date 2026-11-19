@@ -310,7 +310,8 @@ class DonationWidgetState extends ConsumerState<DonationWidget>
     return Column(
       children: [
         AnimatedEndScreenSection(
-          child: showLocalState && !snoozeState.isDonor
+          // Muted in Settings: no ask and no thank-you card either.
+          child: showLocalState && (!snoozeState.isDonor || snoozeState.isMuted)
               ? const SizedBox.shrink()
               : showLocalState || canShowAsk
               ? Column(

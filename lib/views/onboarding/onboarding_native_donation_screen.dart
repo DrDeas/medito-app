@@ -15,8 +15,9 @@ import 'package:medito/views/donation/webview_donation_screen.dart';
 /// up and shows the webview instead.
 const _nativeSetupTimeout = Duration(seconds: 5);
 
-/// Matches the paywall webview, whose in-page × fades in after 5 seconds.
-const onboardingCloseButtonDelay = Duration(seconds: 5);
+/// The close button is there from the first frame: nobody should have to
+/// wait out a payment page they did not ask to stay on.
+const onboardingCloseButtonDelay = Duration.zero;
 
 const _source = AnalyticsEventConstants.paywallSourceOnboarding;
 
@@ -57,7 +58,7 @@ final onboardingNativeCheckoutProvider =
 
 /// Arm B of `onboarding_native_pay`: the route the intro CTA pushes instead
 /// of the paywall webview. Like the webview it is a full-screen route whose
-/// close button fades in after [onboardingCloseButtonDelay]; closing it, going
+/// close button is shown after [onboardingCloseButtonDelay]; closing it, going
 /// back, or donating pops it, and the intro then advances onboarding.
 class OnboardingNativeDonationScreen extends ConsumerStatefulWidget {
   const OnboardingNativeDonationScreen({super.key});

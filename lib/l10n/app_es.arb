@@ -1546,5 +1546,13 @@
   "endScreenRestoredYesterday": "Hola de nuevo. Terminaste «{title}» ayer.",
   "endScreenRestoredTimerLastNight": "Hola de nuevo. Terminaste un temporizador de {minutes, plural, =1{1 minuto} other{{minutes} minutos}} anoche.",
   "endScreenRestoredTimerEarlierToday": "Hola de nuevo. Terminaste un temporizador de {minutes, plural, =1{1 minuto} other{{minutes} minutos}} hoy más temprano.",
-  "endScreenRestoredTimerYesterday": "Hola de nuevo. Terminaste un temporizador de {minutes, plural, =1{1 minuto} other{{minutes} minutos}} ayer."
+  "endScreenRestoredTimerYesterday": "Hola de nuevo. Terminaste un temporizador de {minutes, plural, =1{1 minuto} other{{minutes} minutos}} ayer.",
+  "customiseHomeLayoutVisibilityHint": "Usa los interruptores para elegir qué secciones aparecen en Inicio.",
+  "showSectionOnHome": "Mostrar {section} en Inicio",
+  "donationAsksTitle": "Recordatorios de donación",
+  "donationAsksOn": "Activados",
+  "donationAsksOff": "Desactivados",
+  "donationAsksSheetBody": "Medito es gratis y se financia solo con donaciones, por eso de vez en cuando te lo pedimos. Si prefieres que no lo hagamos, desactiva esta opción: no verás tarjetas de donación después de las sesiones ni en Inicio, ni recibirás notificaciones de donación. Siempre puedes donar desde Ajustes.",
+  "donationAsksOnDescription": "Peticiones ocasionales y discretas después de una sesión",
+  "donationAsksOffDescription": "No me pidan donar nunca"
 }

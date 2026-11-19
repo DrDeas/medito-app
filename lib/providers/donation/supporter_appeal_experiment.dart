@@ -185,8 +185,9 @@ class SupporterAppealExperiment {
           null;
 
   bool isSnoozed(DateTime now) =>
+      (prefs.getBool(SharedPreferenceConstants.donationAsksMuted) ?? false) ||
       (prefs.getInt(SharedPreferenceConstants.donationAskSnoozedUntilMs) ?? 0) >
-      now.millisecondsSinceEpoch;
+          now.millisecondsSinceEpoch;
 
   bool eligible(LocalAllStats stats, DateTime now) {
     if (!enabled || suppressed || isSnoozed(now)) return false;

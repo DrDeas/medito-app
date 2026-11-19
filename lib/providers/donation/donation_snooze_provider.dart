@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:medito/services/notifications/supporter_campaign_api.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/notifications/local_notifications.dart';
 import 'supporter_appeal_experiment.dart';
@@ -17,8 +18,13 @@ class DonationSnoozeState {
   final DateTime? lastDonationAt;
   final DateTime? snoozedUntil;
 
+  /// The user switched donation asks off in Settings. Unlike a timed snooze
+  /// this never lapses, and it hides the thank-you card as well.
+  final bool isMuted;
+
   DonationSnoozeState({
     required this.isSnoozed,
+    this.isMuted = false,
     this.lastDonationFrequency,
     this.lastDonationAt,
     this.snoozedUntil,
@@ -51,11 +57,15 @@ class DonationSnooze extends _$DonationSnooze {
     );
 
     final now = DateTime.now();
+    final isMuted =
+        prefs.getBool(SharedPreferenceConstants.donationAsksMuted) ?? false;
     final isSnoozed =
-        snoozedUntilMs != null && now.millisecondsSinceEpoch < snoozedUntilMs;
+        isMuted ||
+        (snoozedUntilMs != null && now.millisecondsSinceEpoch < snoozedUntilMs);
 
     return DonationSnoozeState(
       isSnoozed: isSnoozed,
+      isMuted: isMuted,
       lastDonationFrequency: lastDonationFrequency,
       lastDonationAt: lastDonationAtMs != null
           ? DateTime.fromMillisecondsSinceEpoch(lastDonationAtMs)
@@ -66,10 +76,44 @@ class DonationSnooze extends _$DonationSnooze {
     );
   }
 
+  /// Far enough ahead to read as "never" everywhere the snooze date is
+  /// consulted, including the server's campaign scheduling.
+  static final mutedUntil = DateTime.utc(2100);
+
+  /// Turns every donation ask off (or back on). Muting rides on the existing
+  /// snooze, so the end-of-session card, the Home appeal and the campaign
+  /// pushes the server schedules from `snooze_until` all stop together.
+  Future<void> setMuted(bool muted) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setBool(SharedPreferenceConstants.donationAsksMuted, muted);
+    if (muted) {
+      await prefs.setInt(
+        SharedPreferenceConstants.donationAskSnoozedUntilMs,
+        mutedUntil.millisecondsSinceEpoch,
+      );
+      unawaited(
+        LocalNotifications.cancelSafely(
+          SupporterAppealExperiment.notificationId,
+        ),
+      );
+    } else {
+      await prefs.remove(SharedPreferenceConstants.donationAskSnoozedUntilMs);
+    }
+    if (ref.mounted) ref.invalidateSelf();
+    unawaited(SupporterCampaignApi.updatePreferences(prefs));
+  }
+
+  /// A timed snooze must not shorten a mute: the date is what the server
+  /// schedules campaign pushes from.
+  DateTime _keepingMute(SharedPreferences prefs, DateTime until) =>
+      (prefs.getBool(SharedPreferenceConstants.donationAsksMuted) ?? false)
+      ? mutedUntil
+      : until;
+
   Future<void> snoozeForDays(int days) async {
     final prefs = ref.read(sharedPreferencesProvider);
     final now = DateTime.now();
-    final snoozedUntil = now.add(Duration(days: days));
+    final snoozedUntil = _keepingMute(prefs, now.add(Duration(days: days)));
 
     await prefs.setInt(
       SharedPreferenceConstants.donationAskSnoozedUntilMs,
@@ -91,7 +135,10 @@ class DonationSnooze extends _$DonationSnooze {
         : frequency == 'yearly'
         ? 365
         : 30; // monthly
-    final snoozedUntil = now.add(Duration(days: snoozeDays));
+    final snoozedUntil = _keepingMute(
+      prefs,
+      now.add(Duration(days: snoozeDays)),
+    );
 
     await prefs.setInt(
       SharedPreferenceConstants.lastSuccessfulDonationAtMs,

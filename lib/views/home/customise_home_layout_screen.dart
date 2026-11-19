@@ -40,6 +40,8 @@ class CustomiseHomeLayoutScreenState
   Widget build(BuildContext context) {
     var order = ref.watch(homeWidgetOrderProvider);
     var notifier = ref.read(homeWidgetOrderProvider.notifier);
+    final hidden = ref.watch(homeHiddenWidgetsProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: true,
@@ -74,6 +76,14 @@ class CustomiseHomeLayoutScreenState
                   textAlign: TextAlign.center,
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.customiseHomeLayoutVisibilityHint,
+                  style: context.text.muted.body,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -88,7 +98,26 @@ class CustomiseHomeLayoutScreenState
                           assetName: MeditoIcons.dragHandle,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
-                        title: Text(_getTitleForType(widgetType)),
+                        title: Text(
+                          _getTitleForType(widgetType),
+                          style: hidden.contains(widgetType)
+                              ? context.text.muted.body
+                              : null,
+                        ),
+                        // Up Next starts a session from Home, so it stays.
+                        trailing: HomeHiddenWidgetsNotifier.canHide(widgetType)
+                            ? Semantics(
+                                label: l10n.showSectionOnHome(
+                                  _getTitleForType(widgetType),
+                                ),
+                                child: Switch.adaptive(
+                                  value: !hidden.contains(widgetType),
+                                  onChanged: (show) => ref
+                                      .read(homeHiddenWidgetsProvider.notifier)
+                                      .setHidden(widgetType, !show),
+                                ),
+                              )
+                            : null,
                       );
                     },
                     onReorderItem: (oldIndex, newIndex) {

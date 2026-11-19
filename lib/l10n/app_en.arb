@@ -2783,5 +2783,21 @@
   "endScreenRestoredTimerEarlierToday": "Welcome back. You finished a {minutes}-minute timer earlier today.",
   "@endScreenRestoredTimerEarlierToday": {"description": "As endScreenRestoredEarlierToday, for a Timer session", "placeholders": {"minutes": {"type": "int"}}},
   "endScreenRestoredTimerYesterday": "Welcome back. You finished a {minutes}-minute timer yesterday.",
-  "@endScreenRestoredTimerYesterday": {"description": "As endScreenRestoredYesterday, for a Timer session", "placeholders": {"minutes": {"type": "int"}}}
+  "@endScreenRestoredTimerYesterday": {"description": "As endScreenRestoredYesterday, for a Timer session", "placeholders": {"minutes": {"type": "int"}}},
+  "customiseHomeLayoutVisibilityHint": "Use the switches to choose which sections appear on Home.",
+  "@customiseHomeLayoutVisibilityHint": {"description": "Second instruction on the Organize Home Layout screen, about the show/hide switches"},
+  "showSectionOnHome": "Show {section} on Home",
+  "@showSectionOnHome": {"description": "Screen reader label for the switch that shows or hides a Home section", "placeholders": {"section": {"type": "String"}}},
+  "donationAsksTitle": "Donation reminders",
+  "@donationAsksTitle": {"description": "Settings row that turns requests to donate on or off"},
+  "donationAsksOn": "On",
+  "@donationAsksOn": {"description": "Value of the Donation reminders setting when asks are shown"},
+  "donationAsksOff": "Off",
+  "@donationAsksOff": {"description": "Value of the Donation reminders setting when asks are hidden"},
+  "donationAsksSheetBody": "Medito is free and funded entirely by donations, so now and then we ask. If you would rather not be asked, turn this off: no donation cards after sessions or on Home, and no donation notifications. You can still give any time from Settings.",
+  "@donationAsksSheetBody": {"description": "Explanation in the Donation reminders sheet"},
+  "donationAsksOnDescription": "Occasional, gentle asks after a session",
+  "@donationAsksOnDescription": {"description": "Description of the On option in the Donation reminders sheet"},
+  "donationAsksOffDescription": "Never ask me to donate",
+  "@donationAsksOffDescription": {"description": "Description of the Off option in the Donation reminders sheet"}
 }

@@ -133,3 +133,50 @@ class HomeWidgetOrderNotifier extends Notifier<List<HomeWidgetType>> {
     state = _applyBlackFridayOrdering(_loadBaseOrder());
   }
 }
+
+/// Home sections the user has switched off. Up Next cannot be hidden: it is
+/// how a session is started from Home.
+final homeHiddenWidgetsProvider =
+    NotifierProvider<HomeHiddenWidgetsNotifier, Set<HomeWidgetType>>(
+      HomeHiddenWidgetsNotifier.new,
+    );
+
+class HomeHiddenWidgetsNotifier extends Notifier<Set<HomeWidgetType>> {
+  static bool canHide(HomeWidgetType type) => type != HomeWidgetType.upNext;
+
+  @override
+  Set<HomeWidgetType> build() {
+    final saved =
+        ref
+            .read(sharedPreferencesProvider)
+            .getStringList(SharedPreferenceConstants.homeHiddenWidgets) ??
+        const <String>[];
+    return {
+      for (final type in HomeWidgetType.values)
+        if (canHide(type) && saved.contains(type.name)) type,
+    };
+  }
+
+  Future<void> setHidden(HomeWidgetType type, bool hidden) async {
+    if (!canHide(type)) return;
+    final next = {...state};
+    hidden ? next.add(type) : next.remove(type);
+    state = next;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setStringList(
+          SharedPreferenceConstants.homeHiddenWidgets,
+          HomeWidgetType.toStringList(next.toList()),
+        );
+  }
+}
+
+/// The Home sections to draw, in order: the user's order (with any seasonal
+/// promotion applied) minus what they switched off.
+final visibleHomeWidgetOrderProvider = Provider<List<HomeWidgetType>>((ref) {
+  final hidden = ref.watch(homeHiddenWidgetsProvider);
+  return [
+    for (final type in ref.watch(homeWidgetOrderProvider))
+      if (!hidden.contains(type)) type,
+  ];
+});

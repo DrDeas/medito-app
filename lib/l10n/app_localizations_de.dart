@@ -3673,4 +3673,33 @@ class AppLocalizationsDe extends AppLocalizations {
   String endScreenRestoredTimerYesterday(int minutes) {
     return 'Willkommen zurück. Du hast gestern einen $minutes-Minuten-Timer beendet.';
   }
+
+  @override
+  String get customiseHomeLayoutVisibilityHint =>
+      'Mit den Schaltern legst du fest, welche Bereiche auf der Startseite erscheinen.';
+
+  @override
+  String showSectionOnHome(String section) {
+    return '$section auf der Startseite anzeigen';
+  }
+
+  @override
+  String get donationAsksTitle => 'Spendenhinweise';
+
+  @override
+  String get donationAsksOn => 'Ein';
+
+  @override
+  String get donationAsksOff => 'Aus';
+
+  @override
+  String get donationAsksSheetBody =>
+      'Medito ist kostenlos und finanziert sich ausschließlich durch Spenden, deshalb fragen wir hin und wieder. Wenn du nicht gefragt werden möchtest, schalte dies aus: keine Spendenkarten nach Sitzungen oder auf der Startseite und keine Spenden-Mitteilungen. Spenden kannst du weiterhin jederzeit in den Einstellungen.';
+
+  @override
+  String get donationAsksOnDescription =>
+      'Gelegentliche, zurückhaltende Hinweise nach einer Sitzung';
+
+  @override
+  String get donationAsksOffDescription => 'Mich nie um Spenden bitten';
 }

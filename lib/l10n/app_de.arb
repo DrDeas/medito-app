@@ -1940,5 +1940,13 @@
   "endScreenRestoredYesterday": "Willkommen zurück. Du hast „{title}“ gestern beendet.",
   "endScreenRestoredTimerLastNight": "Willkommen zurück. Du hast letzte Nacht einen {minutes}-Minuten-Timer beendet.",
   "endScreenRestoredTimerEarlierToday": "Willkommen zurück. Du hast heute einen {minutes}-Minuten-Timer beendet.",
-  "endScreenRestoredTimerYesterday": "Willkommen zurück. Du hast gestern einen {minutes}-Minuten-Timer beendet."
+  "endScreenRestoredTimerYesterday": "Willkommen zurück. Du hast gestern einen {minutes}-Minuten-Timer beendet.",
+  "customiseHomeLayoutVisibilityHint": "Mit den Schaltern legst du fest, welche Bereiche auf der Startseite erscheinen.",
+  "showSectionOnHome": "{section} auf der Startseite anzeigen",
+  "donationAsksTitle": "Spendenhinweise",
+  "donationAsksOn": "Ein",
+  "donationAsksOff": "Aus",
+  "donationAsksSheetBody": "Medito ist kostenlos und finanziert sich ausschließlich durch Spenden, deshalb fragen wir hin und wieder. Wenn du nicht gefragt werden möchtest, schalte dies aus: keine Spendenkarten nach Sitzungen oder auf der Startseite und keine Spenden-Mitteilungen. Spenden kannst du weiterhin jederzeit in den Einstellungen.",
+  "donationAsksOnDescription": "Gelegentliche, zurückhaltende Hinweise nach einer Sitzung",
+  "donationAsksOffDescription": "Mich nie um Spenden bitten"
 }

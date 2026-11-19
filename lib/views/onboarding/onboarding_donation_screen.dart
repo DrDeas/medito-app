@@ -217,7 +217,11 @@ class _DonationScreenState extends ConsumerState<OnboardingDonationScreen> {
                                       ? null
                                       : () => _handleDonationAction(context),
                                 ),
-                                if (_hasAttemptedDonation) ...[
+                                // Always offered. The step is an invitation,
+                                // and a first-time user who cannot afford to
+                                // give should be able to pass it in one tap
+                                // without first opening the payment page.
+                                ...[
                                   const SizedBox(height: 12),
                                   SizedBox(
                                     width: double.infinity,

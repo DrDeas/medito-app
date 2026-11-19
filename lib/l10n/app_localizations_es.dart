@@ -3668,4 +3668,33 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return 'Hola de nuevo. Terminaste un temporizador de $_temp0 ayer.';
   }
+
+  @override
+  String get customiseHomeLayoutVisibilityHint =>
+      'Usa los interruptores para elegir qué secciones aparecen en Inicio.';
+
+  @override
+  String showSectionOnHome(String section) {
+    return 'Mostrar $section en Inicio';
+  }
+
+  @override
+  String get donationAsksTitle => 'Recordatorios de donación';
+
+  @override
+  String get donationAsksOn => 'Activados';
+
+  @override
+  String get donationAsksOff => 'Desactivados';
+
+  @override
+  String get donationAsksSheetBody =>
+      'Medito es gratis y se financia solo con donaciones, por eso de vez en cuando te lo pedimos. Si prefieres que no lo hagamos, desactiva esta opción: no verás tarjetas de donación después de las sesiones ni en Inicio, ni recibirás notificaciones de donación. Siempre puedes donar desde Ajustes.';
+
+  @override
+  String get donationAsksOnDescription =>
+      'Peticiones ocasionales y discretas después de una sesión';
+
+  @override
+  String get donationAsksOffDescription => 'No me pidan donar nunca';
 }

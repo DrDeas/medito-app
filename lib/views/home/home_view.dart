@@ -135,7 +135,7 @@ class _HomeViewState extends ConsumerState<HomeView>
         // from the second section. Anything else on top stays in the list
         // under a short image banner.
         final hasHero = ref.watch(homeHeroCoverProvider) != null;
-        final fullOrder = ref.watch(homeWidgetOrderProvider);
+        final fullOrder = ref.watch(visibleHomeWidgetOrderProvider);
         final first = fullOrder.firstOrNull;
         final heroType =
             hasHero &&

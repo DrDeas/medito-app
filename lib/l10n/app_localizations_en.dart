@@ -3610,4 +3610,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String endScreenRestoredTimerYesterday(int minutes) {
     return 'Welcome back. You finished a $minutes-minute timer yesterday.';
   }
+
+  @override
+  String get customiseHomeLayoutVisibilityHint =>
+      'Use the switches to choose which sections appear on Home.';
+
+  @override
+  String showSectionOnHome(String section) {
+    return 'Show $section on Home';
+  }
+
+  @override
+  String get donationAsksTitle => 'Donation reminders';
+
+  @override
+  String get donationAsksOn => 'On';
+
+  @override
+  String get donationAsksOff => 'Off';
+
+  @override
+  String get donationAsksSheetBody =>
+      'Medito is free and funded entirely by donations, so now and then we ask. If you would rather not be asked, turn this off: no donation cards after sessions or on Home, and no donation notifications. You can still give any time from Settings.';
+
+  @override
+  String get donationAsksOnDescription =>
+      'Occasional, gentle asks after a session';
+
+  @override
+  String get donationAsksOffDescription => 'Never ask me to donate';
 }

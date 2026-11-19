@@ -6381,6 +6381,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome back. You finished a {minutes}-minute timer yesterday.'**
   String endScreenRestoredTimerYesterday(int minutes);
+
+  /// Second instruction on the Organize Home Layout screen, about the show/hide switches
+  ///
+  /// In en, this message translates to:
+  /// **'Use the switches to choose which sections appear on Home.'**
+  String get customiseHomeLayoutVisibilityHint;
+
+  /// Screen reader label for the switch that shows or hides a Home section
+  ///
+  /// In en, this message translates to:
+  /// **'Show {section} on Home'**
+  String showSectionOnHome(String section);
+
+  /// Settings row that turns requests to donate on or off
+  ///
+  /// In en, this message translates to:
+  /// **'Donation reminders'**
+  String get donationAsksTitle;
+
+  /// Value of the Donation reminders setting when asks are shown
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get donationAsksOn;
+
+  /// Value of the Donation reminders setting when asks are hidden
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get donationAsksOff;
+
+  /// Explanation in the Donation reminders sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Medito is free and funded entirely by donations, so now and then we ask. If you would rather not be asked, turn this off: no donation cards after sessions or on Home, and no donation notifications. You can still give any time from Settings.'**
+  String get donationAsksSheetBody;
+
+  /// Description of the On option in the Donation reminders sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Occasional, gentle asks after a session'**
+  String get donationAsksOnDescription;
+
+  /// Description of the Off option in the Donation reminders sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Never ask me to donate'**
+  String get donationAsksOffDescription;
 }
 
 class _AppLocalizationsDelegate

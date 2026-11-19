@@ -38,6 +38,10 @@ class SharedPreferenceConstants {
   static const String dayBoundaryOffsetHours = 'day_boundary_offset_hours';
 
   static const String homeWidgetOrder = 'homeWidgetOrder';
+  // Home sections the user switched off on the Customise Home screen.
+  static const String homeHiddenWidgets = 'home_hidden_widgets';
+  // The user asked not to be shown donation asks at all.
+  static const String donationAsksMuted = 'donation_asks_muted';
 
   // DND settings
   static const String dndEnabled = 'dnd_enabled';

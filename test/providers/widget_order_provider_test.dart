@@ -524,4 +524,97 @@ void main() {
       });
     });
   });
+
+  group('hidden Home sections', () {
+    late SharedPreferences prefs;
+    late ProviderContainer container;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          homeWidgetOrderClockProvider.overrideWithValue(
+            () => DateTime(DateTime.now().year, 1, 1),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+    });
+
+    test('everything is shown by default', () {
+      expect(container.read(homeHiddenWidgetsProvider), isEmpty);
+      expect(
+        container.read(visibleHomeWidgetOrderProvider),
+        container.read(homeWidgetOrderProvider),
+      );
+    });
+
+    test('a hidden section leaves Home and is remembered', () async {
+      await container
+          .read(homeHiddenWidgetsProvider.notifier)
+          .setHidden(HomeWidgetType.products, true);
+
+      expect(
+        container.read(visibleHomeWidgetOrderProvider),
+        isNot(contains(HomeWidgetType.products)),
+      );
+      expect(
+        container.read(homeWidgetOrderProvider),
+        contains(HomeWidgetType.products),
+        reason: 'its place in the order is kept for when it is shown again',
+      );
+      expect(prefs.getStringList(SharedPreferenceConstants.homeHiddenWidgets), [
+        'products',
+      ]);
+
+      final restarted = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(restarted.dispose);
+      expect(restarted.read(homeHiddenWidgetsProvider), {
+        HomeWidgetType.products,
+      });
+    });
+
+    test('showing a section again restores it', () async {
+      final notifier = container.read(homeHiddenWidgetsProvider.notifier);
+      await notifier.setHidden(HomeWidgetType.quote, true);
+      await notifier.setHidden(HomeWidgetType.quote, false);
+      expect(
+        container.read(visibleHomeWidgetOrderProvider),
+        contains(HomeWidgetType.quote),
+      );
+    });
+
+    test('Up Next cannot be hidden', () async {
+      await container
+          .read(homeHiddenWidgetsProvider.notifier)
+          .setHidden(HomeWidgetType.upNext, true);
+      expect(
+        container.read(visibleHomeWidgetOrderProvider),
+        contains(HomeWidgetType.upNext),
+      );
+    });
+
+    test('a promoted shop row stays hidden in Black Friday week', () async {
+      final blackFriday = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          homeWidgetOrderClockProvider.overrideWithValue(
+            () => DateTime(2026, 11, 27),
+          ),
+        ],
+      );
+      addTearDown(blackFriday.dispose);
+      await blackFriday
+          .read(homeHiddenWidgetsProvider.notifier)
+          .setHidden(HomeWidgetType.products, true);
+      expect(
+        blackFriday.read(visibleHomeWidgetOrderProvider),
+        isNot(contains(HomeWidgetType.products)),
+      );
+    });
+  });
 }
