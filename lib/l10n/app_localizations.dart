@@ -6435,6 +6435,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medito could not connect. Your downloads and the timer still work.'**
   String get offlineDownloadsMessage;
+
+  /// Snackbar in the player when a long session resumes from a saved position; time is like 12:34
+  ///
+  /// In en, this message translates to:
+  /// **'Picked up where you left off, at {time}'**
+  String playerResumedFrom(String time);
+
+  /// Snackbar action that restarts the session from the beginning instead of resuming
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get playerStartOver;
 }
 
 class _AppLocalizationsDelegate

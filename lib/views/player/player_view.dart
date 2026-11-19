@@ -32,6 +32,9 @@ import 'package:medito/views/player/widgets/bottom_actions/player_action_bar.dar
 import 'package:medito/views/player/widgets/duration_indicator_widget.dart';
 import 'package:medito/views/player/widgets/stopwatch_elapsed_widget.dart';
 import 'package:medito/views/player/widgets/player_buttons/player_buttons_widget.dart';
+import 'package:medito/services/audio/resume_position_store.dart';
+import 'package:medito/utils/duration_extensions.dart';
+import 'package:medito/widgets/snackbar_widget.dart';
 import 'package:medito/services/audio/session_bell_preview.dart';
 import 'package:medito/constants/strings/analytics_event_constants.dart';
 import 'package:medito/l10n/app_localizations.dart';
@@ -69,6 +72,14 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
 
   /// Keeps a previous session's completed state from opening the end screen.
   final _completionGate = SessionCompletionGate();
+
+  /// Remembers how far into a long session the user got. Tracking starts
+  /// once this session's own start position is settled and stops as soon as
+  /// the screen begins to close, so neither the previous session's leftover
+  /// position nor the reset to zero on the way out is ever saved.
+  late final ResumePositionStore _resumeStore;
+  bool _trackResume = false;
+  int _lastSavedPositionMs = 0;
   final _analytics = FirebaseAnalyticsService();
   // Snapshot of stats taken when the player opens, before the session can
   // affect them. EndScreenView uses this as the "before" value so its
@@ -94,6 +105,11 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
     super.initState();
     PendingEndScreen.playerMounted();
     _prefs = ref.read(sharedPreferencesProvider);
+    _resumeStore = ResumePositionStore(_prefs);
+    ref.listenManual(
+      audioStateProvider.select((s) => s.position),
+      (_, position) => _rememberPosition(position),
+    );
     _statsAtSessionStart = ref.read(statsProvider).value;
     // Bells are remembered per scope (on by default for a timer, off under
     // tracks); set before _initializePlayer restores them.
@@ -151,6 +167,8 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
     try {
       await ref.read(playerProvider.notifier).play(request);
       if (!mounted) return;
+      await _resumeIfLeftPartWay(request);
+      if (!mounted) return;
       _completionGate.trackLoaded(
         isCompleted: ref.read(audioStateProvider).isCompleted,
       );
@@ -168,6 +186,59 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
       AppLogger.e('PLAYER', 'Failed to start playback', e, st);
       if (mounted) setState(() => _startFailed = true);
     }
+  }
+
+  /// Continues a long session from where it was left, and says so with a
+  /// one-tap way to start over instead.
+  Future<void> _resumeIfLeftPartWay(PlaybackRequest request) async {
+    if (request.isTimer) return;
+    final resumeAt = _resumeStore.positionFor(
+      request.fileId,
+      durationMs: request.duration,
+    );
+    if (resumeAt != null) {
+      try {
+        await ref.read(playerProvider.notifier).seekToPosition(resumeAt);
+        _lastSavedPositionMs = resumeAt;
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          showSnackBar(
+            context,
+            l10n.playerResumedFrom(
+              Duration(milliseconds: resumeAt).toMinutesSeconds(),
+            ),
+            actionLabel: l10n.playerStartOver,
+            onActionPressed: () {
+              _lastSavedPositionMs = 0;
+              unawaited(_resumeStore.clear(request.fileId));
+              unawaited(ref.read(playerProvider.notifier).seekToPosition(0));
+            },
+          );
+        }
+      } catch (e) {
+        AppLogger.w('PLAYER', 'Could not resume from saved position: $e');
+      }
+    }
+    _trackResume = true;
+  }
+
+  /// Saves the position every ten seconds of progress, and at once after a
+  /// jump backwards. Frequent enough to survive the app being killed without
+  /// writing to disk on every tick.
+  void _rememberPosition(int positionMs) {
+    if (!_trackResume) return;
+    final request = ref.read(playerProvider);
+    if (request == null || request.isTimer) return;
+    final moved = positionMs - _lastSavedPositionMs;
+    if (moved >= 0 && moved < 10000) return;
+    _lastSavedPositionMs = positionMs;
+    unawaited(
+      _resumeStore.save(
+        request.fileId,
+        positionMs: positionMs,
+        durationMs: request.duration,
+      ),
+    );
   }
 
   void _retryPlayback() {
@@ -492,6 +563,7 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
   }
 
   void _resetState() {
+    _trackResume = false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(audioStateProvider.notifier).resetState();
     });
@@ -505,6 +577,8 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
         if (afterStop != null) unawaited(stopped.then((_) => afterStop()));
         final currentlyPlayingTrack = ref.read(playerProvider);
         if (currentlyPlayingTrack == null) return;
+        // Finished: next time this session starts from the beginning.
+        unawaited(_resumeStore.clear(currentlyPlayingTrack.fileId));
 
         // handleStats (run from the platform on completion) has already
         // written the new completion to local stats and pushed it through

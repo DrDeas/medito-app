@@ -3701,4 +3701,12 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get offlineDownloadsMessage =>
       'Medito no pudo conectarse. Tus descargas y el temporizador siguen funcionando.';
+
+  @override
+  String playerResumedFrom(String time) {
+    return 'Continuamos donde lo dejaste, en $time';
+  }
+
+  @override
+  String get playerStartOver => 'Empezar de nuevo';
 }

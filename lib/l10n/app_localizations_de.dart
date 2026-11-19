@@ -3706,4 +3706,12 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get offlineDownloadsMessage =>
       'Medito konnte keine Verbindung herstellen. Deine Downloads und der Timer funktionieren weiterhin.';
+
+  @override
+  String playerResumedFrom(String time) {
+    return 'Weiter an der Stelle, an der du aufgehört hast: $time';
+  }
+
+  @override
+  String get playerStartOver => 'Von vorn beginnen';
 }
