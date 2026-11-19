@@ -243,6 +243,16 @@ Future<void> initializeAudioService() async {
         rewindInterval: Duration(seconds: 15),
       ),
     );
+    // Set the playback category now rather than on the first session. Until
+    // it is set iOS uses its default category, which obeys the Ring/Silent
+    // switch, so a bell previewed on the timer screen before any session had
+    // played was silent or audible depending on the switch. Configuring does
+    // not activate the session, so other apps' audio keeps playing.
+    try {
+      await iosAudioHandler.ensureInitialized();
+    } catch (e) {
+      AppLogger.w('MAIN', 'Audio session setup deferred to first play: $e');
+    }
   }
 }
 

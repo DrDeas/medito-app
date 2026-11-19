@@ -20,6 +20,7 @@ class PlayerButtonsWidget extends ConsumerWidget {
     required this.onPlayPause,
     this.isPortrait = true,
     this.isLoading = false,
+    this.isRebuffering = false,
     this.showSkipButtons = true,
     this.onStop,
   });
@@ -30,6 +31,7 @@ class PlayerButtonsWidget extends ConsumerWidget {
   final Function() onPlayPause;
   final bool isPortrait;
   final bool isLoading;
+  final bool isRebuffering;
 
   /// False for a stopwatch, which has no length to skip through.
   final bool showSkipButtons;
@@ -51,6 +53,7 @@ class PlayerButtonsWidget extends ConsumerWidget {
             isPlaying: isPlaying,
             onPlayPause: onPlayPause,
             isLoading: isLoading,
+            isRebuffering: isRebuffering,
           ),
           const SizedBox(height: 24),
           Row(
@@ -83,6 +86,7 @@ class PlayerButtonsWidget extends ConsumerWidget {
             isPlaying: isPlaying,
             onPlayPause: onPlayPause,
             isLoading: isLoading,
+            isRebuffering: isRebuffering,
           ),
           if (showSkipButtons) ...[
             const SizedBox(width: 32),

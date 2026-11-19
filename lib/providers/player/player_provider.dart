@@ -297,9 +297,7 @@ class PlayerProvider extends Notifier<PlaybackRequest?> {
     if (Platform.isAndroid) {
       _api.skip10SecondsForward();
     } else {
-      iosAudioHandler.seek(
-        iosAudioHandler.position + const Duration(seconds: 15),
-      );
+      iosAudioHandler.seekBy(const Duration(seconds: 15));
     }
   }
 
@@ -307,9 +305,7 @@ class PlayerProvider extends Notifier<PlaybackRequest?> {
     if (Platform.isAndroid) {
       _api.skip10SecondsBackward();
     } else {
-      iosAudioHandler.seek(
-        iosAudioHandler.position - const Duration(seconds: 15),
-      );
+      iosAudioHandler.seekBy(const Duration(seconds: -15));
     }
   }
 

@@ -336,6 +336,10 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
     final isAudioLoading =
         !audioState.isCompleted &&
         (!_playbackStarted || audioState.isBuffering);
+    // A stall after playback began (weak signal mid-session) still shows the
+    // spinner, but the button stays live so the session can be paused rather
+    // than only abandoned.
+    final isRebuffering = isAudioLoading && _playbackStarted;
 
     return PopScope<void>(
       onPopInvokedWithResult: (didPop, result) {
@@ -348,6 +352,7 @@ class _PlayerViewState extends ConsumerState<PlayerView> {
         currentlyPlayingTrack: currentlyPlayingTrack,
         isPlaying: isPlaying,
         isAudioLoading: isAudioLoading,
+        isRebuffering: isRebuffering,
         isBackgroundSoundSelected: _isBackgroundSoundSelected(),
         onPlayPausePressed: onPlayPausePressed,
         onSpeedChanged: (speed) =>
@@ -542,6 +547,7 @@ class PlayerScreenLayout extends StatelessWidget {
     required this.currentlyPlayingTrack,
     required this.isPlaying,
     required this.isAudioLoading,
+    this.isRebuffering = false,
     required this.isBackgroundSoundSelected,
     required this.onPlayPausePressed,
     required this.onSpeedChanged,
@@ -552,6 +558,7 @@ class PlayerScreenLayout extends StatelessWidget {
   final PlaybackRequest currentlyPlayingTrack;
   final bool isPlaying;
   final bool isAudioLoading;
+  final bool isRebuffering;
   final bool isBackgroundSoundSelected;
   final VoidCallback onPlayPausePressed;
   final ValueChanged<double> onSpeedChanged;
@@ -639,6 +646,7 @@ class PlayerScreenLayout extends StatelessWidget {
                                         currentlyPlayingTrack.duration,
                                     isPlaying: isPlaying,
                                     isLoading: isAudioLoading,
+                                    isRebuffering: isRebuffering,
                                     onPlayPause: onPlayPausePressed,
                                     isStopwatch: isStopwatch,
                                     onStop: onStop,
@@ -655,6 +663,7 @@ class PlayerScreenLayout extends StatelessWidget {
                                           currentlyPlayingTrack.duration,
                                       isPlaying: isPlaying,
                                       isLoading: isAudioLoading,
+                                      isRebuffering: isRebuffering,
                                       onPlayPause: onPlayPausePressed,
                                       isStopwatch: isStopwatch,
                                       onStop: onStop,
@@ -699,6 +708,7 @@ class _PortraitPlayerLayout extends ConsumerWidget {
     required this.totalDurationMs,
     required this.isPlaying,
     required this.isLoading,
+    this.isRebuffering = false,
     required this.onPlayPause,
     this.isStopwatch = false,
     this.onStop,
@@ -711,6 +721,7 @@ class _PortraitPlayerLayout extends ConsumerWidget {
   final int totalDurationMs;
   final bool isPlaying;
   final bool isLoading;
+  final bool isRebuffering;
   final VoidCallback onPlayPause;
   final bool isStopwatch;
   final VoidCallback? onStop;
@@ -741,6 +752,7 @@ class _PortraitPlayerLayout extends ConsumerWidget {
           PlayerButtonsWidget(
             isPlaying: isPlaying,
             isLoading: isLoading,
+            isRebuffering: isRebuffering,
             onPlayPause: onPlayPause,
             onSkip10SecondsBackward: () =>
                 ref.read(playerProvider.notifier).skip10SecondsBackward(),
@@ -764,6 +776,7 @@ class _LandscapePlayerLayout extends ConsumerWidget {
     required this.totalDurationMs,
     required this.isPlaying,
     required this.isLoading,
+    this.isRebuffering = false,
     required this.onPlayPause,
     this.isStopwatch = false,
     this.onStop,
@@ -775,6 +788,7 @@ class _LandscapePlayerLayout extends ConsumerWidget {
   final int totalDurationMs;
   final bool isPlaying;
   final bool isLoading;
+  final bool isRebuffering;
   final VoidCallback onPlayPause;
   final bool isStopwatch;
   final VoidCallback? onStop;
@@ -803,6 +817,7 @@ class _LandscapePlayerLayout extends ConsumerWidget {
         PlayerButtonsWidget(
           isPlaying: isPlaying,
           isLoading: isLoading,
+          isRebuffering: isRebuffering,
           onPlayPause: onPlayPause,
           onSkip10SecondsBackward: () =>
               ref.read(playerProvider.notifier).skip10SecondsBackward(),

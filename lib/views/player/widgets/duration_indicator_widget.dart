@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:medito/constants/constants.dart';
 import 'package:medito/l10n/app_localizations.dart';
 import 'package:medito/utils/duration_extensions.dart';
@@ -34,6 +36,19 @@ class _DurationIndicatorWidgetState
   bool _isSeekbarBeingDragged = false;
   double _dragSeekbarValue = 0;
 
+  /// The player position at the moment a drag was released. Until the player
+  /// reports a different one, the thumb stays where it was dropped instead of
+  /// jumping back to the old position for a frame or two.
+  int? _positionAtRelease;
+  int _lastPosition = 0;
+  Timer? _releaseFallback;
+
+  @override
+  void dispose() {
+    _releaseFallback?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final totalDuration = ref.watch(
@@ -52,6 +67,11 @@ class _DurationIndicatorWidgetState
     // clamp values to avoid negative slider values
     final safeTotal = effectiveTotal < 0 ? 0 : effectiveTotal;
     final safePosition = currentPosition < 0 ? 0 : currentPosition;
+    _lastPosition = currentPosition;
+    if (_positionAtRelease != null && _positionAtRelease != currentPosition) {
+      _positionAtRelease = null;
+      _releaseFallback?.cancel();
+    }
 
     return _durationBar(
       context,
@@ -73,8 +93,8 @@ class _DurationIndicatorWidgetState
   ) {
     final l10n = AppLocalizations.of(context)!;
     final sliderMax = totalDuration > 0.0 ? totalDuration : 1.0;
-    final sliderValue = _isSeekbarBeingDragged
-        ? _dragSeekbarValue
+    final sliderValue = _isSeekbarBeingDragged || _positionAtRelease != null
+        ? _dragSeekbarValue.clamp(0.0, sliderMax)
         : currentDuration.clamp(0.0, sliderMax);
     final positionMs = (sliderValue * 100).round();
     final canSeek = rawTotalDuration > 0;
@@ -154,6 +174,12 @@ class _DurationIndicatorWidgetState
 
   void _onChangeEnd(double val) {
     _isSeekbarBeingDragged = false;
+    _positionAtRelease = _lastPosition;
+    // A seek to where the player already is reports no new position.
+    _releaseFallback?.cancel();
+    _releaseFallback = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _positionAtRelease = null);
+    });
     widget.onSeekEnd((val * 100).toInt());
   }
 

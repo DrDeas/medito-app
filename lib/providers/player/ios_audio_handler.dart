@@ -15,7 +15,10 @@ import '../../src/audio_pigeon.g.dart';
 import '../../utils/stats_updater.dart';
 import '../../utils/logger.dart';
 
-class IosAudioHandler extends BaseAudioHandler {
+// SeekHandler supplies rewind()/fastForward() in terms of seek(); without it
+// the lock-screen, Control Center and headphone skip controls this handler
+// advertises were silent no-ops.
+class IosAudioHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
   late final sessionBells = IosSessionBells(_player);
   // Distinguish a repeat boundary from terminal completion; never wait for bells.
@@ -60,11 +63,10 @@ class IosAudioHandler extends BaseAudioHandler {
             case AudioInterruptionType.duck:
               _player.setVolume(_player.volume * 2.0);
               break;
+            // just_audio resumes its own players after an interruption that
+            // iOS marks as resumable; resuming here as well would restart a
+            // session the user paused themselves.
             case AudioInterruptionType.pause:
-              if (_player.playing) {
-                _player.play();
-              }
-              break;
             case AudioInterruptionType.unknown:
               break;
           }
@@ -365,8 +367,11 @@ class IosAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> seek(Duration position) {
-    return _player.seek(position);
+    return _player.seek(clampSeekPosition(position, _player.duration));
   }
+
+  /// Skips by [offset] from the current position, staying inside the track.
+  Future<void> seekBy(Duration offset) => seek(_player.position + offset);
 
   @override
   Future<void> setSpeed(double speed) {
@@ -477,13 +482,24 @@ class IosAudioHandler extends BaseAudioHandler {
         AudioSource.uri(Uri.parse(request.remoteUrl)),
       );
     } else {
-      await _player.setAsset(downloadPath);
+      // A download is a file in the app's Documents directory. setAsset
+      // would treat the path as a bundled Flutter asset and copy the whole
+      // file into Caches before playing it.
+      await _player.setFilePath(downloadPath);
     }
 
     await setCustomRepeatMode(_currentRepeatMode);
 
     _trackStateSubject.add(trackData);
   }
+}
+
+/// Keeps a seek target inside `[0, duration]`. With no known duration only
+/// the lower bound applies.
+Duration clampSeekPosition(Duration position, Duration? duration) {
+  if (position < Duration.zero) return Duration.zero;
+  if (duration != null && position > duration) return duration;
+  return position;
 }
 
 class IosStateData {

@@ -13,6 +13,7 @@ class PlayPauseButtonWidget extends ConsumerWidget {
     required this.isPlaying,
     required this.onPlayPause,
     this.isLoading = false,
+    this.isRebuffering = false,
   });
 
   final double iconSize;
@@ -23,30 +24,52 @@ class PlayPauseButtonWidget extends ConsumerWidget {
   /// icon (same box size, so nothing shifts) and ignore taps.
   final bool isLoading;
 
+  /// The spinner is for a stall after playback had started. The button then
+  /// still pauses and resumes, so a dropped connection never traps the user
+  /// on a control that ignores them.
+  final bool isRebuffering;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
     if (isLoading) {
+      final spinner = _spinner();
+      if (!isRebuffering) {
+        return Semantics(label: l10n.loading, child: spinner);
+      }
       return Semantics(
-        label: l10n.loading,
-        child: SizedBox(
-          width: iconSize,
-          height: iconSize,
-          child: Center(
-            child: SizedBox(
-              width: iconSize * 0.5,
-              height: iconSize * 0.5,
-              child: const CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(ColorConstants.white),
-              ),
-            ),
-          ),
+        label: isPlaying ? l10n.pause : l10n.play,
+        value: l10n.loading,
+        button: true,
+        child: InkWell(
+          onTap: onPlayPause,
+          borderRadius: BorderRadius.circular(iconSize / 2),
+          child: ExcludeSemantics(child: spinner),
         ),
       );
     }
+    return _button(l10n);
+  }
 
+  Widget _spinner() {
+    return SizedBox(
+      width: iconSize,
+      height: iconSize,
+      child: Center(
+        child: SizedBox(
+          width: iconSize * 0.5,
+          height: iconSize * 0.5,
+          child: const CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(ColorConstants.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _button(AppLocalizations l10n) {
     return Semantics(
       label: isPlaying ? l10n.pause : l10n.play,
       button: true,
